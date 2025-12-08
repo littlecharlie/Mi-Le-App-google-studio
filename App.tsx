@@ -3,7 +3,7 @@ import { UserRole, Room, Booking, RoomType, BookingStatus } from './types';
 import { INITIAL_ROOMS, MOCK_BOOKINGS } from './constants';
 import { generateRoomDescription } from './services/geminiService';
 import { BookingModal } from './components/BookingModal';
-import { ConciergeChat } from './components/ConciergeChat';
+import { WhatsAppButton } from './components/WhatsAppButton';
 import { ImageCarousel } from './components/ImageCarousel';
 import { 
   Building, 
@@ -30,7 +30,7 @@ const App = () => {
   
   // Admin State
   const [newRoom, setNewRoom] = useState<Partial<Room>>({
-    name: '', type: RoomType.ROOM, price: 0, amenities: [], description: '', imageUrl: ''
+    name: '', type: RoomType.ROOM, price: 0, weekendPrice: 0, amenities: [], description: '', imageUrl: ''
   });
   const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
 
@@ -55,6 +55,7 @@ const App = () => {
       name: newRoom.name!,
       type: newRoom.type as RoomType,
       price: Number(newRoom.price),
+      weekendPrice: newRoom.weekendPrice ? Number(newRoom.weekendPrice) : undefined,
       description: newRoom.description || 'No description provided.',
       imageUrl: primaryImage,
       images: [primaryImage], // Initialize images array with the single image provided
@@ -62,7 +63,7 @@ const App = () => {
       capacity: 2 // Defaulting for simplicity
     };
     setRooms([...rooms, room]);
-    setNewRoom({ name: '', type: RoomType.ROOM, price: 0, amenities: [], description: '', imageUrl: '' });
+    setNewRoom({ name: '', type: RoomType.ROOM, price: 0, weekendPrice: 0, amenities: [], description: '', imageUrl: '' });
     alert("Room created successfully!");
   };
 
@@ -267,7 +268,23 @@ const App = () => {
                       <h3 className="text-xl font-bold text-gray-900 leading-tight group-hover:text-brand-600 transition">{room.name}</h3>
                       <div className="flex flex-col items-end">
                         <span className="text-lg font-bold text-brand-600">${room.price}</span>
-                        <span className="text-xs text-gray-400">/ night</span>
+                        {room.type === RoomType.RESORT ? (
+                           <>
+                             <span className="text-xs text-gray-500">per pax / night</span>
+                           </>
+                        ) : (
+                           <>
+                            {room.weekendPrice && <span className="text-xs text-gray-500">Weekday</span>}
+                            {!room.weekendPrice && <span className="text-xs text-gray-400">/ night</span>}
+                           </>
+                        )}
+                        
+                        {room.weekendPrice && room.type !== RoomType.RESORT && (
+                           <div className="text-right">
+                              <span className="text-sm font-semibold text-gray-500">${room.weekendPrice}</span>
+                              <span className="text-[10px] text-gray-400 ml-1">Weekend</span>
+                           </div>
+                        )}
                       </div>
                     </div>
                     <p className="text-gray-600 text-sm mb-4 line-clamp-3 flex-1">{room.description}</p>
@@ -310,8 +327,8 @@ const App = () => {
           </div>
         </div>
 
-        {/* Floating Chat */}
-        <ConciergeChat rooms={rooms} />
+        {/* Floating WhatsApp Button */}
+        <WhatsAppButton />
         
         {/* Booking Modal */}
         {selectedRoom && (
@@ -475,7 +492,9 @@ const App = () => {
                 </select>
               </div>
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700">Price per Night ($)</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  {newRoom.type === RoomType.RESORT ? 'Weekday Price per Pax ($)' : 'Weekday Price ($)'}
+                </label>
                 <input
                   required
                   type="number"
@@ -486,6 +505,19 @@ const App = () => {
                 />
               </div>
               <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  {newRoom.type === RoomType.RESORT ? 'Weekend Price per Pax ($)' : 'Weekend Price ($)'}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-500 focus:outline-none"
+                  value={newRoom.weekendPrice || ''}
+                  onChange={e => setNewRoom({...newRoom, weekendPrice: Number(e.target.value)})}
+                  placeholder="Optional"
+                />
+              </div>
+              <div className="space-y-2 col-span-2">
                 <label className="block text-sm font-medium text-gray-700">Image URL</label>
                 <input
                   type="text"
@@ -548,7 +580,11 @@ const App = () => {
                     <img src={r.imageUrl} alt={r.name} className="w-16 h-16 rounded object-cover bg-gray-200" />
                     <div>
                       <p className="font-bold text-sm">{r.name}</p>
-                      <p className="text-xs text-gray-500">{r.type} • ${r.price}</p>
+                      <p className="text-xs text-gray-500">{r.type}</p>
+                      <p className="text-xs font-semibold text-brand-600">
+                        {r.type === RoomType.RESORT ? 'Pax Price: ' : 'WD: '}
+                        ${r.price} {r.weekendPrice ? `/ WE: $${r.weekendPrice}` : ''}
+                      </p>
                     </div>
                  </div>
                ))}

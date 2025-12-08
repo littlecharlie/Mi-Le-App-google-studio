@@ -23,10 +23,11 @@ export interface Room {
   id: string;
   name: string;
   type: RoomType;
-  price: number;
+  price: number; // Weekday Price
+  weekendPrice?: number; // Weekend Price
   description: string;
   imageUrl: string;
-  images?: string[]; // Added support for multiple images
+  images?: string[]; 
   amenities: string[];
   capacity: number;
 }
