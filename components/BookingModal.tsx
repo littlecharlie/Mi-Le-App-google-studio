@@ -1,23 +1,75 @@
-import React, { useState } from 'react';
-import { Room } from '../types';
-import { X, Calendar, User, Mail } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Room, Booking, BookingStatus } from '../types';
+import { X, Calendar, User, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface BookingModalProps {
   room: Room;
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (bookingDetails: any) => void;
+  existingBookings: Booking[];
 }
 
-export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClose, onConfirm }) => {
+export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClose, onConfirm, existingBookings }) => {
   const [dates, setDates] = useState({ checkIn: '', checkOut: '' });
   const [guests, setGuests] = useState(1);
   const [details, setDetails] = useState({ name: '', email: '' });
+  const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
+
+  // Reset state when room changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setDates({ checkIn: '', checkOut: '' });
+      setGuests(1);
+      setDetails({ name: '', email: '' });
+      setIsAvailable(null);
+    }
+  }, [isOpen, room.id]);
+
+  useEffect(() => {
+    checkAvailability();
+  }, [dates.checkIn, dates.checkOut]);
+
+  const checkAvailability = () => {
+    if (!dates.checkIn || !dates.checkOut) {
+      setIsAvailable(null);
+      return;
+    }
+
+    const start = new Date(dates.checkIn);
+    const end = new Date(dates.checkOut);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Basic validation
+    if (start < today || start >= end) {
+      setIsAvailable(false);
+      return;
+    }
+
+    const hasConflict = existingBookings.some(booking => {
+      // Filter for this room and active bookings
+      if (booking.roomId !== room.id || booking.status === BookingStatus.CANCELLED) return false;
+      
+      const bStart = new Date(booking.checkIn);
+      const bEnd = new Date(booking.checkOut);
+
+      // Check for overlap
+      // Range 1 (User): start to end
+      // Range 2 (Existing): bStart to bEnd
+      // Overlap if: start < bEnd AND end > bStart
+      return start < bEnd && end > bStart;
+    });
+
+    setIsAvailable(!hasConflict);
+  };
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAvailable === false) return;
+
     // Simple day calculation
     const start = new Date(dates.checkIn);
     const end = new Date(dates.checkOut);
@@ -35,6 +87,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClos
     });
     onClose();
   };
+
+  const getDays = () => {
+    if (!dates.checkIn || !dates.checkOut) return 0;
+    const start = new Date(dates.checkIn);
+    const end = new Date(dates.checkOut);
+    if (start >= end) return 0;
+    return Math.ceil((end.getTime() - start.getTime()) / (1000 * 3600 * 24));
+  };
+
+  const days = getDays();
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -75,6 +137,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClos
                 <input
                   required
                   type="date"
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-500 focus:outline-none"
                   value={dates.checkIn}
                   onChange={e => setDates({...dates, checkIn: e.target.value})}
@@ -88,6 +151,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClos
                 <input
                   required
                   type="date"
+                  min={dates.checkIn || new Date().toISOString().split('T')[0]}
                   className="w-full pl-8 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-brand-500 focus:outline-none"
                   value={dates.checkOut}
                   onChange={e => setDates({...dates, checkOut: e.target.value})}
@@ -95,6 +159,27 @@ export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClos
               </div>
             </div>
           </div>
+
+          {/* Availability Status */}
+          {dates.checkIn && dates.checkOut && (
+            <div className={`p-3 rounded-lg flex items-center gap-2 text-sm font-medium ${
+              isAvailable 
+                ? 'bg-green-50 text-green-700 border border-green-200' 
+                : 'bg-red-50 text-red-700 border border-red-200'
+            }`}>
+              {isAvailable ? (
+                <>
+                  <CheckCircle size={16} />
+                  <span>Dates are available!</span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle size={16} />
+                  <span>Room is not available for these dates.</span>
+                </>
+              )}
+            </div>
+          )}
 
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-700">Guests</label>
@@ -113,15 +198,19 @@ export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClos
             <div>
               <p className="text-sm text-gray-500">Total Estimate</p>
               <p className="text-lg font-bold text-brand-700">
-                ${dates.checkIn && dates.checkOut ? 
-                  (Math.ceil(Math.abs(new Date(dates.checkOut).getTime() - new Date(dates.checkIn).getTime()) / (1000 * 3600 * 24)) * room.price) : 0}
+                ${days > 0 ? days * room.price : 0}
               </p>
             </div>
             <button 
               type="submit"
-              className="bg-brand-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-brand-700 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              disabled={!isAvailable}
+              className={`px-6 py-2 rounded-lg font-medium transition shadow-lg transform hover:-translate-y-0.5 ${
+                isAvailable 
+                  ? 'bg-brand-600 text-white hover:bg-brand-700 hover:shadow-xl' 
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none hover:translate-y-0'
+              }`}
             >
-              Confirm Booking
+              Request to Book
             </button>
           </div>
         </form>

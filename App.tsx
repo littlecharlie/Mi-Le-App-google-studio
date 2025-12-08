@@ -4,6 +4,7 @@ import { INITIAL_ROOMS, MOCK_BOOKINGS } from './constants';
 import { generateRoomDescription } from './services/geminiService';
 import { BookingModal } from './components/BookingModal';
 import { ConciergeChat } from './components/ConciergeChat';
+import { ImageCarousel } from './components/ImageCarousel';
 import { 
   Building, 
   Users, 
@@ -39,17 +40,24 @@ const App = () => {
   const [filterType, setFilterType] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Success Modal State
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [successBookingDetails, setSuccessBookingDetails] = useState<any>(null);
+
   // --- Actions ---
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
+    const primaryImage = newRoom.imageUrl || `https://picsum.photos/800/600?random=${rooms.length + 1}`;
+    
     const room: Room = {
       id: Date.now().toString(),
       name: newRoom.name!,
       type: newRoom.type as RoomType,
       price: Number(newRoom.price),
       description: newRoom.description || 'No description provided.',
-      imageUrl: newRoom.imageUrl || `https://picsum.photos/800/600?random=${rooms.length + 1}`,
+      imageUrl: primaryImage,
+      images: [primaryImage], // Initialize images array with the single image provided
       amenities: newRoom.amenities as string[] || [],
       capacity: 2 // Defaulting for simplicity
     };
@@ -83,7 +91,10 @@ const App = () => {
       createdAt: new Date().toISOString()
     };
     setBookings([...bookings, booking]);
-    alert("Booking request sent! A staff member will confirm shortly.");
+    
+    // Set success details and open modal
+    setSuccessBookingDetails({ ...booking, roomName: details.roomName });
+    setSuccessModalOpen(true);
   };
 
   const updateBookingStatus = (id: string, status: BookingStatus) => {
@@ -122,6 +133,54 @@ const App = () => {
       </div>
     </nav>
   );
+
+  const renderSuccessModal = () => {
+    if (!successModalOpen || !successBookingDetails) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-fade-in-up text-center p-6 relative">
+          <button 
+            onClick={() => setSuccessModalOpen(false)}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          >
+            <XCircle size={20} />
+          </button>
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
+            <CheckCircle size={32} />
+          </div>
+          <h3 className="text-xl font-serif font-bold text-gray-900 mb-2">Booking Confirmed!</h3>
+          <p className="text-gray-500 mb-6 text-sm">
+            Thank you, {successBookingDetails.customerName}. Your reservation request has been received.
+          </p>
+          
+          <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left space-y-3 text-sm">
+            <div className="flex justify-between items-start">
+              <span className="text-gray-500">Room</span>
+              <span className="font-semibold text-gray-900 text-right max-w-[60%]">{successBookingDetails.roomName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Dates</span>
+              <span className="font-semibold text-gray-900">
+                {new Date(successBookingDetails.checkIn).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {new Date(successBookingDetails.checkOut).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              </span>
+            </div>
+            <div className="flex justify-between pt-3 border-t border-gray-200">
+              <span className="font-medium text-gray-900">Total Price</span>
+              <span className="font-bold text-brand-600 text-lg">${successBookingDetails.totalPrice}</span>
+            </div>
+          </div>
+
+          <button 
+            onClick={() => setSuccessModalOpen(false)}
+            className="w-full bg-brand-600 text-white py-3 rounded-lg font-medium hover:bg-brand-700 transition shadow-md"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   const renderCustomerView = () => {
     const filteredRooms = rooms.filter(room => {
@@ -195,8 +254,11 @@ const App = () => {
               filteredRooms.map(room => (
                 <div key={room.id} className="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 flex flex-col h-full">
                   <div className="relative h-64 overflow-hidden">
-                    <img src={room.imageUrl} alt={room.name} className="w-full h-full object-cover transition duration-700 group-hover:scale-110" />
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-brand-800 uppercase tracking-wide">
+                    <ImageCarousel 
+                      images={room.images && room.images.length > 0 ? room.images : [room.imageUrl]} 
+                      alt={room.name} 
+                    />
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-brand-800 uppercase tracking-wide z-20">
                       {room.type}
                     </div>
                   </div>
@@ -257,7 +319,8 @@ const App = () => {
             room={selectedRoom} 
             isOpen={bookingModalOpen} 
             onClose={() => setBookingModalOpen(false)} 
-            onConfirm={handleBookingCreate} 
+            onConfirm={handleBookingCreate}
+            existingBookings={bookings}
           />
         )}
       </div>
@@ -503,6 +566,7 @@ const App = () => {
         {role === UserRole.STAFF && renderStaffView()}
         {role === UserRole.ADMIN && renderAdminView()}
       </main>
+      {renderSuccessModal()}
     </div>
   );
 };

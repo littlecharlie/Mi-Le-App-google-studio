@@ -26,6 +26,7 @@ export interface Room {
   price: number;
   description: string;
   imageUrl: string;
+  images?: string[]; // Added support for multiple images
   amenities: string[];
   capacity: number;
 }
