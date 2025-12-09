@@ -111,13 +111,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClos
     // If Resort, redirect to WhatsApp
     if (room.type === RoomType.RESORT) {
       const phoneNumber = "60162157028";
-      const message = `Hello, I would like to request a quote for ${room.name} (Resort).
+      const message = `Hello, I would like to request a quote for ${room.name} (Resort) at Mi Le Garden.
       
 Name: ${details.name}
 Phone: ${details.phone}
 Dates: ${dates.checkIn} to ${dates.checkOut}
 Guests: ${adults} Adults, ${kids} Kids
-Estimated Quote: $${totalPrice}
+Estimated Quote: RM${totalPrice}
 
 Is this available?`;
       
@@ -381,7 +381,7 @@ Is this available?`;
                    {isResort ? 'Estimated Quote' : 'Total Amount'}
                 </span>
                 <span className="text-2xl font-bold text-brand-700 dark:text-brand-400">
-                   ${totalEstimate}
+                   RM{totalEstimate}
                 </span>
              </div>
              <button 

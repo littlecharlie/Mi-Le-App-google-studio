@@ -242,8 +242,8 @@ const App = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-serif font-bold">L</div>
-            <span className="font-serif text-xl font-bold text-gray-900 dark:text-white tracking-tight">LuxStay</span>
+            <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white font-serif font-bold">M</div>
+            <span className="font-serif text-xl font-bold text-gray-900 dark:text-white tracking-tight">Mi Le Garden</span>
           </div>
           <div className="flex items-center space-x-4">
             <div className="hidden md:flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
@@ -275,6 +275,16 @@ const App = () => {
         </div>
       </div>
     </nav>
+  );
+
+  const renderFooter = () => (
+    <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6 mt-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+          Copyright &copy; MI LE GARDEN SDN. BHD. Company No. 202301039520 (1533440-V). All Rights Reserved.
+        </p>
+      </div>
+    </footer>
   );
 
   const renderSuccessModal = () => {
@@ -310,7 +320,7 @@ const App = () => {
             </div>
             <div className="flex justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
               <span className="font-medium text-gray-900 dark:text-white">Total Price</span>
-              <span className="font-bold text-brand-600 dark:text-brand-400 text-lg">${successBookingDetails.totalPrice}</span>
+              <span className="font-bold text-brand-600 dark:text-brand-400 text-lg">RM{successBookingDetails.totalPrice}</span>
             </div>
           </div>
 
@@ -335,7 +345,7 @@ const App = () => {
     });
 
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 transition-colors">
+      <div className="flex-1 bg-gray-50 dark:bg-gray-900 pb-20 transition-colors">
         {/* Hero */}
         <div className="relative h-[50vh] bg-gray-900 flex items-center justify-center overflow-hidden">
           <img 
@@ -409,7 +419,7 @@ const App = () => {
                     <div className="flex justify-between items-start mb-2">
                       <h3 className="text-xl font-bold text-gray-900 dark:text-white leading-tight group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">{room.name}</h3>
                       <div className="flex flex-col items-end">
-                        <span className="text-lg font-bold text-brand-600 dark:text-brand-400">${room.price}</span>
+                        <span className="text-lg font-bold text-brand-600 dark:text-brand-400">RM{room.price}</span>
                         {room.type === RoomType.RESORT ? (
                            <>
                              <span className="text-xs text-gray-500 dark:text-gray-400">per pax / night</span>
@@ -423,7 +433,7 @@ const App = () => {
                         
                         {room.weekendPrice && room.type !== RoomType.RESORT && (
                            <div className="text-right">
-                              <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">${room.weekendPrice}</span>
+                              <span className="text-sm font-semibold text-gray-500 dark:text-gray-400">RM{room.weekendPrice}</span>
                               <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1">Weekend</span>
                            </div>
                         )}
@@ -749,7 +759,7 @@ const App = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Total Revenue</p>
-              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">${totalRevenue.toLocaleString()}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">RM{totalRevenue.toLocaleString()}</h3>
             </div>
           </div>
           <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm flex items-center gap-4">
@@ -783,7 +793,7 @@ const App = () => {
                       style={{ height: `${value}%` }}
                    ></div>
                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-700 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition">
-                      ${value * 100}
+                      RM{value * 100}
                    </div>
                 </div>
               ))}
@@ -860,7 +870,7 @@ const App = () => {
               {/* Price Fields with Manual Override Logic */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {newRoom.type === RoomType.RESORT ? 'Weekday Price per Pax ($)' : 'Weekday Price ($)'}
+                  {newRoom.type === RoomType.RESORT ? 'Weekday Price per Pax (RM)' : 'Weekday Price (RM)'}
                 </label>
                 <input
                   required={!newRoom.manualPricing}
@@ -874,7 +884,7 @@ const App = () => {
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {newRoom.type === RoomType.RESORT ? 'Weekend Price per Pax ($)' : 'Weekend Price ($)'}
+                  {newRoom.type === RoomType.RESORT ? 'Weekend Price per Pax (RM)' : 'Weekend Price (RM)'}
                 </label>
                 <input
                   type="number"
@@ -1075,7 +1085,7 @@ const App = () => {
                          {room.manualPricing ? (
                              <span className="text-orange-600 dark:text-orange-400 font-medium text-xs">Quote Only</span>
                          ) : (
-                             <>${room.price} <span className="text-gray-400">/</span> {room.weekendPrice ? `$${room.weekendPrice}` : '-'}</>
+                             <>RM{room.price} <span className="text-gray-400">/</span> {room.weekendPrice ? `RM${room.weekendPrice}` : '-'}</>
                          )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
@@ -1245,13 +1255,14 @@ const App = () => {
   };
 
   return (
-    <div className="min-h-screen font-sans bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <div className="min-h-screen flex flex-col font-sans bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
       {renderNavbar()}
-      <main>
+      <main className="flex-1 w-full">
         {role === UserRole.CUSTOMER && renderCustomerView()}
         {role === UserRole.STAFF && renderStaffView()}
         {role === UserRole.ADMIN && renderAdminView()}
       </main>
+      {renderFooter()}
       {renderSuccessModal()}
     </div>
   );

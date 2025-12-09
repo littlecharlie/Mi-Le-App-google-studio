@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
@@ -8,7 +8,7 @@ const WhatsAppIcon = () => (
 
 export const WhatsAppButton = () => {
   const phoneNumber = "60162157028";
-  const message = "Hello, I would like to inquire about a reservation at LuxStay.";
+  const message = "Hello, I would like to inquire about a reservation at Mi Le Garden.";
   const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
   return (

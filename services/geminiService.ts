@@ -27,9 +27,9 @@ export const generateRoomDescription = async (name: string, type: string, amenit
 
 export const getConciergeResponse = async (history: {role: string, text: string}[], currentMessage: string, availableRooms: Room[]) => {
   try {
-    const roomContext = availableRooms.map(r => `${r.name} (${r.type}): $${r.price}/night. Features: ${r.amenities.join(', ')}.`).join('\n');
+    const roomContext = availableRooms.map(r => `${r.name} (${r.type}): RM${r.price}/night. Features: ${r.amenities.join(', ')}.`).join('\n');
     
-    const systemInstruction = `You are "Lux", the AI Concierge for LuxStay Hotel. 
+    const systemInstruction = `You are "Lux", the AI Concierge for Mi Le Garden Hotel. 
     Your goal is to help customers find the perfect room and answer questions about the hotel.
     
     Here is the current list of available rooms:
@@ -67,7 +67,7 @@ export const getConciergeResponse = async (history: {role: string, text: string}
 
 export const generateMarketingContent = async (room: Room): Promise<string> => {
   try {
-    const prompt = `Create a promotional Instagram post for this hotel room:
+    const prompt = `Create a promotional Instagram post for this hotel room at Mi Le Garden:
     Name: ${room.name}
     Type: ${room.type}
     Features: ${room.amenities.join(', ')}
@@ -80,7 +80,7 @@ export const generateMarketingContent = async (room: Room): Promise<string> => {
       contents: prompt,
     });
     
-    return response.text || "Check out our amazing room! #LuxStay";
+    return response.text || "Check out our amazing room! #MiLeGarden";
   } catch (error) {
     console.error("Gemini Marketing Error:", error);
     return "Could not generate marketing content at this time.";
@@ -91,7 +91,7 @@ export const analyzePricing = async (room: Room): Promise<string> => {
   try {
     const prompt = `Act as a Hotel Revenue Manager. Analyze the pricing for this room:
     Name: ${room.name}
-    Price: $${room.price} (Weekday)
+    Price: RM${room.price} (Weekday)
     Type: ${room.type}
     Amenities: ${room.amenities.join(', ')}
     
