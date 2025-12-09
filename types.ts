@@ -38,6 +38,7 @@ export interface Booking {
   roomId: string;
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   checkIn: string;
   checkOut: string;
   guests: number;

@@ -10,6 +10,7 @@ import {
   Users, 
   Settings, 
   LogOut, 
+  LogIn,
   PlusCircle, 
   CheckCircle, 
   XCircle, 
@@ -35,7 +36,10 @@ import {
   Moon,
   Sun,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Bell,
+  BedDouble,
+  Phone
 } from 'lucide-react';
 
 const App = () => {
@@ -65,6 +69,10 @@ const App = () => {
   const [marketingRoomId, setMarketingRoomId] = useState<string>('');
   const [marketingResult, setMarketingResult] = useState<{content: string, type: 'social' | 'price' | null}>({ content: '', type: null });
   const [isMarketingLoading, setIsMarketingLoading] = useState(false);
+
+  // Staff State
+  const [staffFilter, setStaffFilter] = useState<'all' | 'arrivals' | 'departures' | 'in_house' | 'pending'>('all');
+  const [staffSearch, setStaffSearch] = useState('');
 
   // Customer State
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
@@ -208,6 +216,7 @@ const App = () => {
       roomId: details.roomId,
       customerName: details.name,
       customerEmail: details.email,
+      customerPhone: details.phone,
       checkIn: details.checkIn,
       checkOut: details.checkOut,
       guests: details.guests,
@@ -478,111 +487,239 @@ const App = () => {
   };
 
   const renderStaffView = () => {
+    // Staff Dashboard Logic
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Calculate Stats
+    const arrivalsToday = bookings.filter(b => b.checkIn === today && b.status === BookingStatus.CONFIRMED).length;
+    const departuresToday = bookings.filter(b => b.checkOut === today && b.status === BookingStatus.CHECKED_IN).length;
+    const inHouse = bookings.filter(b => b.status === BookingStatus.CHECKED_IN).length;
+    const pendingRequests = bookings.filter(b => b.status === BookingStatus.PENDING).length;
+
+    // Filter Logic
+    const filteredBookings = bookings.filter(b => {
+      // 1. Text Search
+      const matchesSearch = b.customerName.toLowerCase().includes(staffSearch.toLowerCase()) || 
+                            b.id.includes(staffSearch.toLowerCase()) ||
+                            b.customerPhone?.includes(staffSearch);
+      
+      // 2. Tab Filter
+      let matchesTab = true;
+      if (staffFilter === 'arrivals') {
+        matchesTab = b.checkIn === today && b.status === BookingStatus.CONFIRMED;
+      } else if (staffFilter === 'departures') {
+        matchesTab = b.checkOut === today && b.status === BookingStatus.CHECKED_IN;
+      } else if (staffFilter === 'in_house') {
+        matchesTab = b.status === BookingStatus.CHECKED_IN;
+      } else if (staffFilter === 'pending') {
+        matchesTab = b.status === BookingStatus.PENDING;
+      }
+
+      return matchesSearch && matchesTab;
+    });
+
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex items-center justify-between mb-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-fade-in">
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Booking Management</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Manage guest reservations and statuses</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <LayoutDashboard className="text-brand-600 dark:text-brand-400" />
+              Front Desk Operations
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage daily arrivals, departures, and guest requests.</p>
           </div>
-          <div className="flex gap-4">
-             <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center min-w-[100px]">
-                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Total</span>
-                <span className="text-xl font-bold text-brand-600 dark:text-brand-400">{bookings.length}</span>
-             </div>
-             <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center min-w-[100px]">
-                <span className="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Pending</span>
-                <span className="text-xl font-bold text-orange-500">{bookings.filter(b => b.status === BookingStatus.PENDING).length}</span>
-             </div>
+          
+          <div className="relative w-full md:w-72">
+             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+             <input 
+               type="text" 
+               placeholder="Search guest name or ID..." 
+               value={staffSearch}
+               onChange={(e) => setStaffSearch(e.target.value)}
+               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm"
+             />
           </div>
         </div>
 
+        {/* Stats / Quick Filters */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+           <button 
+             onClick={() => setStaffFilter(staffFilter === 'arrivals' ? 'all' : 'arrivals')}
+             className={`p-4 rounded-xl border transition-all text-left group ${staffFilter === 'arrivals' ? 'bg-brand-50 border-brand-200 ring-2 ring-brand-500 dark:bg-brand-900/20 dark:border-brand-700' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-brand-300 dark:hover:border-brand-700'}`}
+           >
+              <div className="flex justify-between items-start mb-2">
+                 <div className="p-2 rounded-lg bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 group-hover:scale-110 transition-transform">
+                    <LogIn size={20} />
+                 </div>
+                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{arrivalsToday}</span>
+              </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Arrivals Today</p>
+           </button>
+
+           <button 
+             onClick={() => setStaffFilter(staffFilter === 'departures' ? 'all' : 'departures')}
+             className={`p-4 rounded-xl border transition-all text-left group ${staffFilter === 'departures' ? 'bg-brand-50 border-brand-200 ring-2 ring-brand-500 dark:bg-brand-900/20 dark:border-brand-700' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-brand-300 dark:hover:border-brand-700'}`}
+           >
+              <div className="flex justify-between items-start mb-2">
+                 <div className="p-2 rounded-lg bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400 group-hover:scale-110 transition-transform">
+                    <LogOut size={20} />
+                 </div>
+                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{departuresToday}</span>
+              </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Departures Today</p>
+           </button>
+
+           <button 
+             onClick={() => setStaffFilter(staffFilter === 'in_house' ? 'all' : 'in_house')}
+             className={`p-4 rounded-xl border transition-all text-left group ${staffFilter === 'in_house' ? 'bg-brand-50 border-brand-200 ring-2 ring-brand-500 dark:bg-brand-900/20 dark:border-brand-700' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-brand-300 dark:hover:border-brand-700'}`}
+           >
+              <div className="flex justify-between items-start mb-2">
+                 <div className="p-2 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                    <BedDouble size={20} />
+                 </div>
+                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{inHouse}</span>
+              </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">In House</p>
+           </button>
+
+           <button 
+             onClick={() => setStaffFilter(staffFilter === 'pending' ? 'all' : 'pending')}
+             className={`p-4 rounded-xl border transition-all text-left group ${staffFilter === 'pending' ? 'bg-brand-50 border-brand-200 ring-2 ring-brand-500 dark:bg-brand-900/20 dark:border-brand-700' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-brand-300 dark:hover:border-brand-700'}`}
+           >
+              <div className="flex justify-between items-start mb-2">
+                 <div className="p-2 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 group-hover:scale-110 transition-transform">
+                    <Bell size={20} />
+                 </div>
+                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingRequests}</span>
+              </div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Pending Approval</p>
+           </button>
+        </div>
+
+        {/* Filters Status Display */}
+        {staffFilter !== 'all' && (
+           <div className="mb-4 flex items-center gap-2">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Filtering by:</span>
+              <span className="px-3 py-1 bg-brand-100 dark:bg-brand-900 text-brand-800 dark:text-brand-200 text-xs font-bold rounded-full uppercase flex items-center gap-2">
+                 {staffFilter.replace('_', ' ')}
+                 <button onClick={() => setStaffFilter('all')} className="hover:text-brand-600"><XCircle size={14}/></button>
+              </span>
+           </div>
+        )}
+
+        {/* Table */}
         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Guest</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Room</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Dates</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Room Details</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Schedule</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {bookings.map(booking => {
-                  const room = rooms.find(r => r.id === booking.roomId);
-                  return (
-                    <tr key={booking.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="h-10 w-10 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center text-brand-700 dark:text-brand-300 font-bold">
-                            {booking.customerName.charAt(0)}
+                {filteredBookings.length > 0 ? (
+                  filteredBookings.map(booking => {
+                    const room = rooms.find(r => r.id === booking.roomId);
+                    return (
+                      <tr key={booking.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="h-10 w-10 rounded-full bg-brand-100 dark:bg-brand-900 flex items-center justify-center text-brand-700 dark:text-brand-300 font-bold shrink-0">
+                              {booking.customerName.charAt(0)}
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900 dark:text-white">{booking.customerName}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{booking.customerEmail}</div>
+                              {booking.customerPhone && (
+                                <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5">
+                                   <Phone size={12} /> {booking.customerPhone}
+                                </div>
+                              )}
+                              <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{booking.guests} Guests</div>
+                            </div>
                           </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900 dark:text-white">{booking.customerName}</div>
-                            <div className="text-sm text-gray-500 dark:text-gray-400">{booking.customerEmail}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900 dark:text-white font-medium">{room?.name || 'Unknown Room'}</div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">{room?.type}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-col gap-1">
+                             <div className="flex items-center gap-2 text-sm text-gray-900 dark:text-white">
+                                <LogIn size={14} className="text-green-500" />
+                                <span>{new Date(booking.checkIn).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}</span>
+                             </div>
+                             <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                                <LogOut size={14} className="text-orange-500" />
+                                <span>{new Date(booking.checkOut).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}</span>
+                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">{room?.name || 'Unknown Room'}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">{room?.type}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white flex items-center gap-1">
-                           <CalendarIcon size={14} /> {new Date(booking.checkIn).toLocaleDateString()}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400 ml-5">to {new Date(booking.checkOut).toLocaleDateString()}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          booking.status === BookingStatus.CONFIRMED ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                          booking.status === BookingStatus.PENDING ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
-                          booking.status === BookingStatus.CHECKED_IN ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                          booking.status === BookingStatus.CANCELLED ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                          'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                        }`}>
-                          {booking.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {booking.status === BookingStatus.PENDING && (
-                          <button 
-                            onClick={() => updateBookingStatus(booking.id, BookingStatus.CONFIRMED)}
-                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-4 flex items-center gap-1"
-                          >
-                            <CheckCircle size={16} /> Confirm
-                          </button>
-                        )}
-                        {booking.status === BookingStatus.CONFIRMED && (
-                          <button 
-                            onClick={() => updateBookingStatus(booking.id, BookingStatus.CHECKED_IN)}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-4 flex items-center gap-1"
-                          >
-                            <LogOut size={16} className="rotate-90" /> Check In
-                          </button>
-                        )}
-                         {booking.status === BookingStatus.CHECKED_IN && (
-                          <button 
-                            onClick={() => updateBookingStatus(booking.id, BookingStatus.CHECKED_OUT)}
-                            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mr-4 flex items-center gap-1"
-                          >
-                            <LogOut size={16} /> Check Out
-                          </button>
-                        )}
-                        {(booking.status === BookingStatus.PENDING || booking.status === BookingStatus.CONFIRMED) && (
-                           <button 
-                             onClick={() => updateBookingStatus(booking.id, BookingStatus.CANCELLED)}
-                             className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 flex items-center gap-1"
-                           >
-                             <XCircle size={16} /> Cancel
-                           </button>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border ${
+                            booking.status === BookingStatus.CONFIRMED ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800' :
+                            booking.status === BookingStatus.PENDING ? 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800' :
+                            booking.status === BookingStatus.CHECKED_IN ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
+                            booking.status === BookingStatus.CANCELLED ? 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800' :
+                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                          }`}>
+                            {booking.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          {booking.status === BookingStatus.PENDING && (
+                            <button 
+                              onClick={() => updateBookingStatus(booking.id, BookingStatus.CONFIRMED)}
+                              className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 mr-4 flex items-center gap-1 bg-green-50 dark:bg-green-900/20 px-3 py-1.5 rounded-md transition hover:bg-green-100 dark:hover:bg-green-900/40"
+                            >
+                              <CheckCircle size={14} /> Approve
+                            </button>
+                          )}
+                          {booking.status === BookingStatus.CONFIRMED && (
+                            <button 
+                              onClick={() => updateBookingStatus(booking.id, BookingStatus.CHECKED_IN)}
+                              className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-4 flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 px-3 py-1.5 rounded-md transition hover:bg-blue-100 dark:hover:bg-blue-900/40"
+                            >
+                              <LogIn size={14} /> Check In
+                            </button>
+                          )}
+                           {booking.status === BookingStatus.CHECKED_IN && (
+                            <button 
+                              onClick={() => updateBookingStatus(booking.id, BookingStatus.CHECKED_OUT)}
+                              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mr-4 flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-3 py-1.5 rounded-md transition hover:bg-gray-200 dark:hover:bg-gray-600"
+                            >
+                              <LogOut size={14} /> Check Out
+                            </button>
+                          )}
+                          {(booking.status === BookingStatus.PENDING || booking.status === BookingStatus.CONFIRMED) && (
+                             <button 
+                               onClick={() => updateBookingStatus(booking.id, BookingStatus.CANCELLED)}
+                               className="text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 flex items-center gap-1 mt-2 md:mt-0 text-xs"
+                             >
+                               Cancel
+                             </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                       <div className="flex flex-col items-center justify-center">
+                          <div className="w-12 h-12 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-3">
+                             <List size={24} className="opacity-50" />
+                          </div>
+                          <p className="font-medium">No bookings found</p>
+                          <p className="text-sm mt-1">Try adjusting your filters or search.</p>
+                       </div>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -1076,15 +1213,6 @@ const App = () => {
                   <List size={20} />
                   <span className="hidden lg:block font-medium">Inventory</span>
                </button>
-               <button 
-                 onClick={() => setAdminTab('marketing')}
-                 className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                    adminTab === 'marketing' ? 'bg-brand-50 dark:bg-gray-700 text-brand-700 dark:text-brand-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                 }`}
-               >
-                  <Megaphone size={20} />
-                  <span className="hidden lg:block font-medium">Marketing AI</span>
-               </button>
             </div>
             <div className="mt-auto p-4 border-t border-gray-100 dark:border-gray-700">
                <div className="flex items-center gap-3 p-2 text-gray-500 dark:text-gray-400">
@@ -1106,12 +1234,10 @@ const App = () => {
                <p className="text-gray-500 dark:text-gray-400 mb-8 text-sm">
                   {adminTab === 'dashboard' && 'Overview of your property performance.'}
                   {adminTab === 'inventory' && 'Manage rooms, suites, and pricing.'}
-                  {adminTab === 'marketing' && 'Leverage AI to boost your bookings.'}
                </p>
                
                {adminTab === 'dashboard' && renderAdminDashboard()}
                {adminTab === 'inventory' && renderAdminInventory()}
-               {adminTab === 'marketing' && renderAdminMarketing()}
             </div>
          </div>
       </div>

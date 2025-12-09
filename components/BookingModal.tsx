@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Room, Booking, BookingStatus, RoomType } from '../types';
-import { X, Calendar, User, Mail, CheckCircle, AlertCircle, MessageCircle, Users, Check } from 'lucide-react';
+import { X, Calendar, User, Mail, CheckCircle, AlertCircle, MessageCircle, Users, Check, Phone } from 'lucide-react';
 import { ImageCarousel } from './ImageCarousel';
 
 interface BookingModalProps {
@@ -16,7 +16,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClos
   const [guests, setGuests] = useState(1);
   const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
-  const [details, setDetails] = useState({ name: '', email: '' });
+  const [details, setDetails] = useState({ name: '', email: '', phone: '' });
   const [isAvailable, setIsAvailable] = useState<boolean | null>(null);
 
   // Reset state when room changes or modal opens
@@ -26,7 +26,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClos
       setGuests(1);
       setAdults(1);
       setKids(0);
-      setDetails({ name: '', email: '' });
+      setDetails({ name: '', email: '', phone: '' });
       setIsAvailable(null);
     }
   }, [isOpen, room.id]);
@@ -114,6 +114,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({ room, isOpen, onClos
       const message = `Hello, I would like to request a quote for ${room.name} (Resort).
       
 Name: ${details.name}
+Phone: ${details.phone}
 Dates: ${dates.checkIn} to ${dates.checkOut}
 Guests: ${adults} Adults, ${kids} Kids
 Estimated Quote: $${totalPrice}
@@ -324,16 +325,29 @@ Is this available?`;
                       onChange={e => setDetails({...details, name: e.target.value})}
                     />
                  </div>
-                 <div className="relative">
-                    <Mail className="absolute left-3 top-3 text-gray-400" size={16} />
-                    <input
-                      required
-                      type="email"
-                      placeholder="Email Address"
-                      className="w-full pl-10 p-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-                      value={details.email}
-                      onChange={e => setDetails({...details, email: e.target.value})}
-                    />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                   <div className="relative">
+                      <Mail className="absolute left-3 top-3 text-gray-400" size={16} />
+                      <input
+                        required
+                        type="email"
+                        placeholder="Email Address"
+                        className="w-full pl-10 p-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                        value={details.email}
+                        onChange={e => setDetails({...details, email: e.target.value})}
+                      />
+                   </div>
+                   <div className="relative">
+                      <Phone className="absolute left-3 top-3 text-gray-400" size={16} />
+                      <input
+                        required
+                        type="tel"
+                        placeholder="Phone Number"
+                        className="w-full pl-10 p-2.5 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+                        value={details.phone}
+                        onChange={e => setDetails({...details, phone: e.target.value})}
+                      />
+                   </div>
                  </div>
                </div>
 
