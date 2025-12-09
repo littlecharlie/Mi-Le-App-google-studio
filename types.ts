@@ -30,6 +30,7 @@ export interface Room {
   images?: string[]; 
   amenities: string[];
   capacity: number;
+  manualPricing?: boolean; // New field for manual pricing flag
 }
 
 export interface Booking {

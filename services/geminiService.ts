@@ -64,3 +64,47 @@ export const getConciergeResponse = async (history: {role: string, text: string}
     return "I'm having a bit of trouble right now. Please try again later.";
   }
 };
+
+export const generateMarketingContent = async (room: Room): Promise<string> => {
+  try {
+    const prompt = `Create a promotional Instagram post for this hotel room:
+    Name: ${room.name}
+    Type: ${room.type}
+    Features: ${room.amenities.join(', ')}
+    Description: ${room.description}
+    
+    Include engaging emojis and 3-5 relevant hashtags.`;
+
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: prompt,
+    });
+    
+    return response.text || "Check out our amazing room! #LuxStay";
+  } catch (error) {
+    console.error("Gemini Marketing Error:", error);
+    return "Could not generate marketing content at this time.";
+  }
+};
+
+export const analyzePricing = async (room: Room): Promise<string> => {
+  try {
+    const prompt = `Act as a Hotel Revenue Manager. Analyze the pricing for this room:
+    Name: ${room.name}
+    Price: $${room.price} (Weekday)
+    Type: ${room.type}
+    Amenities: ${room.amenities.join(', ')}
+    
+    Is this price competitive for a luxury hotel? Provide a 2-sentence assessment and a suggestion.`;
+
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: prompt,
+    });
+    
+    return response.text || "Pricing analysis unavailable.";
+  } catch (error) {
+    console.error("Gemini Pricing Error:", error);
+    return "Could not analyze pricing at this time.";
+  }
+};
