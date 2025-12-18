@@ -55,17 +55,17 @@ export const ConciergeChat: React.FC<ConciergeChatProps> = ({ rooms }) => {
 
   return (
     <>
-      {/* Trigger Button */}
+      {/* Trigger Button - Moved up to bottom-24 to sit above WhatsApp button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-6 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 ${isOpen ? 'bg-red-500 rotate-90' : 'bg-brand-600 dark:bg-brand-500'} text-white`}
+        className={`fixed bottom-24 right-6 z-40 p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 ${isOpen ? 'bg-red-500 rotate-90' : 'bg-brand-600 dark:bg-brand-500'} text-white`}
       >
         {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
       </button>
 
-      {/* Chat Window */}
+      {/* Chat Window - Moved up to bottom-40 to sit above the trigger button */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl z-40 flex flex-col overflow-hidden border border-brand-100 dark:border-gray-700 animate-slide-up h-[500px]">
+        <div className="fixed bottom-40 right-6 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl z-40 flex flex-col overflow-hidden border border-brand-100 dark:border-gray-700 animate-slide-up h-[500px]">
           {/* Header */}
           <div className="bg-brand-600 dark:bg-brand-700 p-4 text-white flex items-center gap-2">
             <div className="bg-white/20 p-2 rounded-full">
@@ -78,7 +78,7 @@ export const ConciergeChat: React.FC<ConciergeChatProps> = ({ rooms }) => {
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900 custom-scrollbar">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[80%] p-3 rounded-xl text-sm ${
